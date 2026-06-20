@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Dashboard</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-2: #0f1424;
+    --card: rgba(255, 255, 255, 0.04);
+    --card-hover: rgba(255, 255, 255, 0.07);
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #e7ecf5;
+    --muted: #8893a8;
+    --accent: #6c8cff;
+    --accent-2: #b06cff;
+    --glow: rgba(108, 140, 255, 0.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated aurora background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -30%;
+    z-index: 0;
+    background:
+      radial-gradient(40% 40% at 20% 25%, rgba(108, 140, 255, 0.25), transparent 60%),
+      radial-gradient(35% 35% at 80% 20%, rgba(176, 108, 255, 0.22), transparent 60%),
+      radial-gradient(45% 45% at 65% 80%, rgba(76, 201, 240, 0.18), transparent 60%);
+    filter: blur(40px);
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(2%, -2%) scale(1.05); }
+    100% { transform: translate(-2%, 2%) scale(1.02); }
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 64px 24px 80px;
+  }
+
+  /* Header */
+  header { text-align: center; margin-bottom: 14px; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    background: var(--card);
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 22px;
+    backdrop-filter: blur(8px);
+  }
+
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 10px #4ade80;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  h1 {
+    font-size: clamp(34px, 6vw, 56px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    background: linear-gradient(120deg, #fff 20%, var(--accent) 60%, var(--accent-2) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 17px;
+    margin-top: 14px;
+  }
+
+  /* Search */
+  .search {
+    margin: 36px auto 40px;
+    max-width: 480px;
+    position: relative;
+  }
+
+  .search input {
+    width: 100%;
+    padding: 14px 18px 14px 46px;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    backdrop-filter: blur(10px);
+  }
+
+  .search input::placeholder { color: var(--muted); }
+
+  .search input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--glow);
+  }
+
+  .search svg {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+  }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    overflow: hidden;
+    transition: transform 0.25s ease, background 0.25s, border-color 0.25s, box-shadow 0.25s;
+    backdrop-filter: blur(10px);
+    animation: rise 0.5s ease both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(130deg, var(--accent), transparent 40%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    background: var(--card-hover);
+    border-color: transparent;
+    box-shadow: 0 18px 40px -16px var(--glow);
+  }
+
+  .card:hover::after { opacity: 1; }
+
+  .icon {
+    flex-shrink: 0;
+    width: 48px; height: 48px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    box-shadow: 0 6px 18px -6px var(--c1);
+  }
+
+  .card .meta { min-width: 0; }
+
+  .card .title {
+    font-weight: 650;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card .desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .arrow {
+    margin-left: auto;
+    color: var(--muted);
+    transition: transform 0.25s, color 0.25s;
+  }
+
+  .card:hover .arrow {
+    color: var(--accent);
+    transform: translate(3px, -3px);
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--muted);
+    padding: 40px;
+    font-size: 15px;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 56px;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="pill"><span class="dot"></span> All systems online</span>
+      <h1>Welcome back</h1>
+      <p class="subtitle">Your personal hub — everything one click away.</p>
+    </header>
+
+    <div class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input id="filter" type="text" placeholder="Search links..." autocomplete="off" />
+    </div>
+
+    <div class="grid" id="grid">
+      <!-- Cards generated below. Replace href/title/desc with your own links. -->
+    </div>
+
+    <footer>
+      Built with ❤️ · Hosted on <a href="https://pages.github.com/" target="_blank" rel="noopener">GitHub Pages</a>
+    </footer>
+  </div>
+
+<script>
+  // ---- Edit this list: replace url / title / desc with your real links ----
+  const links = [
+    { title: "Dashboard One",   desc: "Analytics & metrics",   url: "https://example.com/1",  icon: "📊", c1: "#6c8cff", c2: "#3b5bff" },
+    { title: "Project Repo",    desc: "Source code",           url: "https://example.com/2",  icon: "💻", c1: "#b06cff", c2: "#7c3bff" },
+    { title: "Documentation",   desc: "Guides & API docs",     url: "https://example.com/3",  icon: "📚", c1: "#4cc9f0", c2: "#3b9bff" },
+    { title: "Design Files",    desc: "Mockups & assets",      url: "https://example.com/4",  icon: "🎨", c1: "#ff6ca8", c2: "#ff3b7c" },
+    { title: "Task Board",      desc: "Sprints & tickets",     url: "https://example.com/5",  icon: "✅", c1: "#4ade80", c2: "#22b455" },
+    { title: "Calendar",        desc: "Schedule & events",     url: "https://example.com/6",  icon: "📅", c1: "#ffb84c", c2: "#ff8a3b" },
+    { title: "Email Inbox",     desc: "Messages",              url: "https://example.com/7",  icon: "✉️", c1: "#6c8cff", c2: "#b06cff" },
+    { title: "Cloud Storage",   desc: "Files & backups",       url: "https://example.com/8",  icon: "☁️", c1: "#4cc9f0", c2: "#6c8cff" },
+    { title: "Monitoring",      desc: "Uptime & alerts",       url: "https://example.com/9",  icon: "📈", c1: "#4ade80", c2: "#4cc9f0" },
+    { title: "Settings",        desc: "Account & config",      url: "https://example.com/10", icon: "⚙️", c1: "#8893a8", c2: "#5a667e" },
+  ];
+
+  const grid = document.getElementById("grid");
+  const filter = document.getElementById("filter");
+
+  function render(list) {
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty">No links match your search.</div>';
+      return;
+    }
+    grid.innerHTML = list.map((l, i) => `
+      <a class="card" href="${l.url}" target="_blank" rel="noopener" style="animation-delay:${i * 50}ms">
+        <span class="icon" style="--c1:${l.c1};--c2:${l.c2}">${l.icon}</span>
+        <span class="meta">
+          <span class="title">${l.title}</span>
+          <span class="desc">${l.desc}</span>
+        </span>
+        <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="7" y1="17" x2="17" y2="7"></line>
+          <polyline points="7 7 17 7 17 17"></polyline>
+        </svg>
+      </a>
+    `).join("");
+  }
+
+  render(links);
+
+  filter.addEventListener("input", (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    render(links.filter(l =>
+      l.title.toLowerCase().includes(q) || l.desc.toLowerCase().includes(q)
+    ));
+  });
+</script>
+</body>
+</html>
