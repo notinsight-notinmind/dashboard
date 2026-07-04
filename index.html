@@ -1,326 +1,359 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>My Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sudolab.se — root access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0e1a;
-    --bg-2: #0f1424;
-    --card: rgba(255, 255, 255, 0.04);
-    --card-hover: rgba(255, 255, 255, 0.07);
-    --border: rgba(255, 255, 255, 0.08);
-    --text: #e7ecf5;
-    --muted: #8893a8;
-    --accent: #6c8cff;
-    --accent-2: #b06cff;
-    --glow: rgba(108, 140, 255, 0.35);
+  :root{
+    --bg:#05070d;
+    --bg-raise:#0b0f1a;
+    --line:#1a2136;
+    --ink:#dfe6f5;
+    --ink-dim:#6b7691;
+    --accent:#8ea8ff;      /* periwinkle */
+    --accent-soft:#8ea8ff22;
+    --signal:#ffb454;      /* amber prompt */
+    --ok:#7ee2b8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Mono',monospace;
+    overflow:hidden;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
+  /* ---------- math animation canvas ---------- */
+  #field{
+    position:fixed;inset:0;
+    width:100%;height:100%;
+    display:block;
+  }
+  /* vignette so text stays readable */
+  .vignette{
+    position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(5,7,13,.72) 78%, rgba(5,7,13,.94) 100%);
   }
 
-  /* Animated aurora background */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: -30%;
-    z-index: 0;
-    background:
-      radial-gradient(40% 40% at 20% 25%, rgba(108, 140, 255, 0.25), transparent 60%),
-      radial-gradient(35% 35% at 80% 20%, rgba(176, 108, 255, 0.22), transparent 60%),
-      radial-gradient(45% 45% at 65% 80%, rgba(76, 201, 240, 0.18), transparent 60%);
-    filter: blur(40px);
-    animation: drift 18s ease-in-out infinite alternate;
+  /* ---------- layout ---------- */
+  .stage{
+    position:relative;z-index:2;
+    height:100%;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:2.6rem;
+    padding:1.5rem;
   }
 
-  @keyframes drift {
-    0%   { transform: translate(0, 0) scale(1); }
-    50%  { transform: translate(2%, -2%) scale(1.05); }
-    100% { transform: translate(-2%, 2%) scale(1.02); }
+  header.mark{text-align:center;user-select:none}
+  .wordmark{
+    font-family:'Chakra Petch',sans-serif;
+    font-weight:700;
+    font-size:clamp(2.6rem,7vw,4.6rem);
+    letter-spacing:.06em;
+    line-height:1;
   }
-
-  .wrap {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 64px 24px 80px;
+  .wordmark .sudo{color:var(--ink)}
+  .wordmark .lab{color:var(--accent)}
+  .wordmark .tld{color:var(--ink-dim);font-weight:300;font-size:.45em;vertical-align:.5em;margin-left:.2em}
+  .tag{
+    margin-top:.9rem;
+    color:var(--ink-dim);
+    font-size:.8rem;
+    letter-spacing:.28em;
+    text-transform:uppercase;
   }
+  .tag b{color:var(--signal);font-weight:500}
 
-  /* Header */
-  header { text-align: center; margin-bottom: 14px; }
-
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    background: var(--card);
-    padding: 6px 14px;
-    border-radius: 999px;
-    margin-bottom: 22px;
-    backdrop-filter: blur(8px);
+  /* ---------- terminal login ---------- */
+  .term{
+    width:min(21rem,86vw);
+    background:color-mix(in srgb, var(--bg-raise) 88%, transparent);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:0 24px 70px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(142,168,255,.05), 0 0 60px -30px var(--accent);
+    overflow:hidden;
   }
-
-  .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 10px #4ade80;
-    animation: pulse 2s infinite;
+  .term-bar{
+    display:flex;align-items:center;gap:.45rem;
+    padding:.45rem .7rem;
+    border-bottom:1px solid var(--line);
+    color:var(--ink-dim);font-size:.64rem;letter-spacing:.08em;
   }
+  .dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--line)}
+  .dot:first-child{background:#3d4666}
+  .term-bar span{margin-left:auto}
+  .term-body{padding:.95rem 1rem 1.05rem;font-size:.76rem;line-height:1.7}
+  .ln .p{color:var(--accent)}
+  .ln .cmd{color:var(--ink)}
+  .ln.sudo-q{color:var(--signal)}
+  .ln.muted{color:var(--ink-dim)}
+  .ln.ok{color:var(--ok)}
+  .ln.err{color:#ff8f8f}
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+  /* app link list */
+  .dest{display:none;margin-top:.6rem}
+  .dest.show{display:block;animation:rise .4s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .dest a{
+    display:flex;justify-content:space-between;align-items:center;gap:.8rem;
+    color:var(--ink);text-decoration:none;
+    padding:.45rem .55rem;margin:.2rem 0;
+    border:1px solid transparent;border-radius:6px;
+    font-size:.76rem;
+    transition:background .15s,border-color .15s,color .15s,transform .15s;
   }
+  .dest a::before{content:'./';color:var(--ink-dim);margin-right:.35rem}
+  .dest a small{color:var(--ink-dim);font-size:.64rem;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dest a:hover{background:var(--accent-soft);border-color:var(--line);color:var(--accent);transform:translateX(3px)}
+  .dest a:hover small,.dest a:hover::before{color:var(--accent)}
+  .dest a:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 
-  h1 {
-    font-size: clamp(34px, 6vw, 56px);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1.05;
-    background: linear-gradient(120deg, #fff 20%, var(--accent) 60%, var(--accent-2) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+  footer{
+    position:fixed;bottom:1.1rem;left:0;right:0;z-index:2;
+    display:flex;justify-content:center;gap:2rem;
+    color:var(--ink-dim);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;
+    user-select:none;
   }
+  footer span b{color:var(--accent);font-weight:400}
 
-  .subtitle {
-    color: var(--muted);
-    font-size: 17px;
-    margin-top: 14px;
+  @media (prefers-reduced-motion: reduce){
+    #field{display:none}
+    .dest.show{animation:none}
   }
-
-  /* Search */
-  .search {
-    margin: 36px auto 40px;
-    max-width: 480px;
-    position: relative;
+  @media (max-height:620px){
+    .stage{gap:1.4rem}
+    .tag{display:none}
   }
-
-  .search input {
-    width: 100%;
-    padding: 14px 18px 14px 46px;
-    font-size: 15px;
-    color: var(--text);
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    backdrop-filter: blur(10px);
-  }
-
-  .search input::placeholder { color: var(--muted); }
-
-  .search input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px var(--glow);
-  }
-
-  .search svg {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-  }
-
-  /* Grid */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 18px;
-  }
-
-  .card {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px;
-    border-radius: 18px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    text-decoration: none;
-    color: var(--text);
-    overflow: hidden;
-    transition: transform 0.25s ease, background 0.25s, border-color 0.25s, box-shadow 0.25s;
-    backdrop-filter: blur(10px);
-    animation: rise 0.5s ease both;
-  }
-
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(130deg, var(--accent), transparent 40%);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 0.25s;
-  }
-
-  .card:hover {
-    transform: translateY(-4px);
-    background: var(--card-hover);
-    border-color: transparent;
-    box-shadow: 0 18px 40px -16px var(--glow);
-  }
-
-  .card:hover::after { opacity: 1; }
-
-  .icon {
-    flex-shrink: 0;
-    width: 48px; height: 48px;
-    border-radius: 13px;
-    display: grid;
-    place-items: center;
-    font-size: 22px;
-    background: linear-gradient(135deg, var(--c1), var(--c2));
-    box-shadow: 0 6px 18px -6px var(--c1);
-  }
-
-  .card .meta { min-width: 0; }
-
-  .card .title {
-    font-weight: 650;
-    font-size: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .card .desc {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .arrow {
-    margin-left: auto;
-    color: var(--muted);
-    transition: transform 0.25s, color 0.25s;
-  }
-
-  .card:hover .arrow {
-    color: var(--accent);
-    transform: translate(3px, -3px);
-  }
-
-  .empty {
-    grid-column: 1 / -1;
-    text-align: center;
-    color: var(--muted);
-    padding: 40px;
-    font-size: 15px;
-  }
-
-  footer {
-    text-align: center;
-    color: var(--muted);
-    font-size: 13px;
-    margin-top: 56px;
-  }
-
-  footer a { color: var(--accent); text-decoration: none; }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <span class="pill"><span class="dot"></span> All systems online</span>
-      <h1>Welcome back</h1>
-      <p class="subtitle">Your personal hub — everything one click away.</p>
-    </header>
 
-    <div class="search">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input id="filter" type="text" placeholder="Search links..." autocomplete="off" />
+<canvas id="field" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+
+<div class="stage">
+  <header class="mark">
+    <div class="wordmark"><span class="sudo">sudo</span><span class="lab">lab</span><span class="tld">.se</span></div>
+    <div class="tag">personal engineering lab — <b>root access required</b></div>
+  </header>
+
+  <section class="term" aria-label="Sign in">
+    <div class="term-bar">
+      <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+      <span>root@sudolab — zsh</span>
     </div>
+    <div class="term-body">
+      <div class="ln"><span class="p">root@sudolab</span> <span class="cmd">$ sudo ls /srv/apps</span></div>
+      <div class="ln muted" id="status">reading links.txt…</div>
 
-    <div class="grid" id="grid">
-      <!-- Cards generated below. Replace href/title/desc with your own links. -->
+      <nav class="dest show" id="apps" aria-label="Web apps"></nav>
     </div>
+  </section>
+</div>
 
-    <footer>
-      Built with ❤️ · Hosted on <a href="https://pages.github.com/" target="_blank" rel="noopener">GitHub Pages</a>
-    </footer>
-  </div>
+<footer>
+  <span>gbg&nbsp;·&nbsp;sweden</span>
+  <span>ℝ⁴ <b>→</b> ℝ³ <b>→</b> ℝ²</span>
+  <span>uptime&nbsp;<b>∞</b></span>
+</footer>
 
 <script>
-  // ---- Edit this list: replace url / title / desc with your real links ----
-  const links = [
-    { title: "Dashboard One",   desc: "Analytics & metrics",   url: "https://example.com/1",  icon: "📊", c1: "#6c8cff", c2: "#3b5bff" },
-    { title: "Project Repo",    desc: "Source code",           url: "https://example.com/2",  icon: "💻", c1: "#b06cff", c2: "#7c3bff" },
-    { title: "Documentation",   desc: "Guides & API docs",     url: "https://example.com/3",  icon: "📚", c1: "#4cc9f0", c2: "#3b9bff" },
-    { title: "Design Files",    desc: "Mockups & assets",      url: "https://example.com/4",  icon: "🎨", c1: "#ff6ca8", c2: "#ff3b7c" },
-    { title: "Task Board",      desc: "Sprints & tickets",     url: "https://example.com/5",  icon: "✅", c1: "#4ade80", c2: "#22b455" },
-    { title: "Calendar",        desc: "Schedule & events",     url: "https://example.com/6",  icon: "📅", c1: "#ffb84c", c2: "#ff8a3b" },
-    { title: "Email Inbox",     desc: "Messages",              url: "https://example.com/7",  icon: "✉️", c1: "#6c8cff", c2: "#b06cff" },
-    { title: "Cloud Storage",   desc: "Files & backups",       url: "https://example.com/8",  icon: "☁️", c1: "#4cc9f0", c2: "#6c8cff" },
-    { title: "Monitoring",      desc: "Uptime & alerts",       url: "https://example.com/9",  icon: "📈", c1: "#4ade80", c2: "#4cc9f0" },
-    { title: "Settings",        desc: "Account & config",      url: "https://example.com/10", icon: "⚙️", c1: "#8893a8", c2: "#5a667e" },
-  ];
+/* =========================================================
+   4D tesseract wireframe
+   16 vertices of {±1}⁴, 32 edges (vertices differing in one
+   coordinate). Double rotation in the (x,w) and (y,z) planes
+   plus a slow (x,y) drift, then two perspective projections:
+   ℝ⁴ → ℝ³ (divide by w-distance) → ℝ² (divide by z-distance).
+   A second, larger counter-rotating tesseract adds depth.
+   ========================================================= */
+const cv = document.getElementById('field');
+const cx = cv.getContext('2d');
+let W, H, dpr;
 
-  const grid = document.getElementById("grid");
-  const filter = document.getElementById("filter");
+function resize(){
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = cv.width  = innerWidth  * dpr;
+  H = cv.height = innerHeight * dpr;
+  cv.style.width = innerWidth + 'px';
+  cv.style.height = innerHeight + 'px';
+  cx.fillStyle = '#05070d';
+  cx.fillRect(0,0,W,H);
+}
+resize();
+addEventListener('resize', resize);
 
-  function render(list) {
-    if (!list.length) {
-      grid.innerHTML = '<div class="empty">No links match your search.</div>';
-      return;
-    }
-    grid.innerHTML = list.map((l, i) => `
-      <a class="card" href="${l.url}" target="_blank" rel="noopener" style="animation-delay:${i * 50}ms">
-        <span class="icon" style="--c1:${l.c1};--c2:${l.c2}">${l.icon}</span>
-        <span class="meta">
-          <span class="title">${l.title}</span>
-          <span class="desc">${l.desc}</span>
-        </span>
-        <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="7" y1="17" x2="17" y2="7"></line>
-          <polyline points="7 7 17 7 17 17"></polyline>
-        </svg>
-      </a>
-    `).join("");
+// vertices: all sign combinations of (±1,±1,±1,±1)
+const VERTS = [];
+for(let i=0;i<16;i++){
+  VERTS.push([ i&1?1:-1, i&2?1:-1, i&4?1:-1, i&8?1:-1 ]);
+}
+// edges: vertex pairs whose indices differ in exactly one bit
+const EDGES = [];
+for(let i=0;i<16;i++){
+  for(let j=i+1;j<16;j++){
+    const d = i ^ j;
+    if((d & (d-1)) === 0) EDGES.push([i,j]);
   }
+}
 
-  render(links);
+const D4 = 3.0;   // 4D camera distance
+const D3 = 4.2;   // 3D camera distance
+let t = 0;
 
-  filter.addEventListener("input", (e) => {
-    const q = e.target.value.toLowerCase().trim();
-    render(links.filter(l =>
-      l.title.toLowerCase().includes(q) || l.desc.toLowerCase().includes(q)
-    ));
+function rotate(p, a, i, j){
+  const c = Math.cos(a), s = Math.sin(a);
+  const pi = p[i], pj = p[j];
+  p[i] = c*pi - s*pj;
+  p[j] = s*pi + c*pj;
+}
+
+// project one tesseract; returns [x, y, depth] per vertex
+function project(time, dir, scale){
+  const out = [];
+  for(const v of VERTS){
+    const p = v.slice();
+    rotate(p, time*0.90*dir, 0, 3);   // x–w
+    rotate(p, time*0.65*dir, 1, 2);   // y–z
+    rotate(p, time*0.28,     0, 1);   // x–y drift
+    // ℝ⁴ → ℝ³
+    const s4 = D4 / (D4 - p[3]);
+    let x = p[0]*s4, y = p[1]*s4, z = p[2]*s4;
+    // ℝ³ → ℝ²
+    const s3 = D3 / (D3 - z);
+    out.push([
+      W/2 + x*s3*scale,
+      H/2 + y*s3*scale,
+      s4*s3                    // combined depth factor
+    ]);
+  }
+  return out;
+}
+
+function drawTesseract(pts, baseAlpha, baseWidth){
+  for(const [a,b] of EDGES){
+    const d = (pts[a][2] + pts[b][2]) / 2;      // avg depth ~0.6..2
+    const near = Math.min(1, Math.max(0, (d - 0.55) / 1.3));
+    cx.strokeStyle = `hsla(${228 - near*16},85%,${34 + near*38}%,${baseAlpha*(0.25 + near*0.75)})`;
+    cx.lineWidth = dpr * baseWidth * (0.5 + near*1.1);
+    cx.beginPath();
+    cx.moveTo(pts[a][0], pts[a][1]);
+    cx.lineTo(pts[b][0], pts[b][1]);
+    cx.stroke();
+  }
+  // vertex glow
+  for(const [x,y,d] of pts){
+    const near = Math.min(1, Math.max(0, (d - 0.55) / 1.3));
+    cx.fillStyle = `hsla(226,90%,${55 + near*30}%,${baseAlpha*(0.3 + near*0.7)})`;
+    cx.beginPath();
+    cx.arc(x, y, dpr*(1 + near*1.8), 0, 6.2832);
+    cx.fill();
+  }
+}
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function frame(){
+  t += 0.006;
+
+  // translucent clear -> soft motion trails
+  cx.fillStyle = 'rgba(5,7,13,0.18)';
+  cx.fillRect(0,0,W,H);
+
+  const base = Math.min(W,H);
+  // large faint background tesseract, counter-rotating
+  drawTesseract(project(t*0.5, -1, base*0.46), 0.16, 0.6);
+  // main tesseract
+  drawTesseract(project(t,      1, base*0.21), 0.85, 0.8);
+
+  if(!reduce) requestAnimationFrame(frame);
+}
+
+if(reduce){
+  // static single frame for reduced-motion users
+  const base = Math.min(W,H);
+  drawTesseract(project(0.8, -1, base*0.46), 0.16, 0.6);
+  drawTesseract(project(1.7,  1, base*0.21), 0.85, 0.8);
+}else{
+  requestAnimationFrame(frame);
+}
+
+/* =========================================================
+   Link list loader
+   Reads a plain text file of buttontext,url pairs.
+   Entries may be separated by NEWLINES or by COLONS, e.g.:
+     lab,https://lab.sudolab.se:code,https://code.sudolab.se
+   or one per line:
+     lab,https://lab.sudolab.se
+     code,https://code.sudolab.se
+   Colons inside URLs (https:// or :8080 ports) are handled.
+   ---------------------------------------------------------
+   NOTE: point LINKS_URL at a file on the SAME host as this
+   page (e.g. ./links.txt). OneDrive/1drv.ms share links can
+   NOT be fetched by browser JavaScript (CORS + sign-in flow).
+   ========================================================= */
+const LINKS_URL = 'links.txt';
+
+const FALLBACK = [
+  ['lab',   'https://lab.sudolab.se'],
+  ['code',  'https://code.sudolab.se'],
+  ['home',  'https://home.sudolab.se'],
+  ['notes', 'https://notes.sudolab.se'],
+];
+
+function parseLinks(text){
+  // split on newlines, or on colons that don't belong to a URL
+  // (i.e. not followed by "//" and not followed by a digit/port)
+  const entries = text
+    .split(/\r?\n|:(?!\/\/|\d)/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const out = [];
+  for(const entry of entries){
+    const i = entry.indexOf(',');
+    if(i === -1) continue;
+    const label = entry.slice(0, i).trim();
+    let url = entry.slice(i + 1).trim();
+    if(!label || !url) continue;
+    if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    out.push([label, url]);
+  }
+  return out;
+}
+
+function render(list){
+  const nav = document.getElementById('apps');
+  nav.innerHTML = '';
+  for(const [label, url] of list){
+    const a = document.createElement('a');
+    a.href = url;
+    a.append(label);
+    const small = document.createElement('small');
+    small.textContent = url.replace(/^https?:\/\//,'');
+    a.append(small);
+    nav.append(a);
+  }
+}
+
+const status = document.getElementById('status');
+
+fetch(LINKS_URL, { cache: 'no-store' })
+  .then(r => { if(!r.ok) throw new Error(r.status); return r.text(); })
+  .then(text => {
+    const list = parseLinks(text);
+    if(!list.length) throw new Error('empty');
+    render(list);
+    status.textContent = `# ${list.length} app${list.length===1?'':'s'} mounted from links.txt`;
+  })
+  .catch(() => {
+    render(FALLBACK);
+    status.textContent = '# links.txt not found — showing defaults';
   });
 </script>
 </body>
