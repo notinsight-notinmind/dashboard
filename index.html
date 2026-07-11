@@ -1,360 +1,780 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>sudolab.se — root access</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#05070d;
-    --bg-raise:#0b0f1a;
-    --line:#1a2136;
-    --ink:#dfe6f5;
-    --ink-dim:#6b7691;
-    --accent:#8ea8ff;      /* periwinkle */
-    --accent-soft:#8ea8ff22;
-    --signal:#ffb454;      /* amber prompt */
-    --ok:#7ee2b8;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:'IBM Plex Mono',monospace;
-    overflow:hidden;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  /* ---------- math animation canvas ---------- */
-  #field{
-    position:fixed;inset:0;
-    width:100%;height:100%;
-    display:block;
-  }
-  /* vignette so text stays readable */
-  .vignette{
-    position:fixed;inset:0;pointer-events:none;
-    background:radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(5,7,13,.72) 78%, rgba(5,7,13,.94) 100%);
-  }
+  <!-- ============ SEO / METADATA ============ -->
+  <title>SudoLab — Systems, Experiments &amp; Intelligent Tools</title>
+  <meta name="description" content="SudoLab is a collection of intelligent tools, experiments and decision-support applications. Launch the main system or the trading analysis platform.">
+  <meta name="theme-color" content="#05080c">
+  <link rel="canonical" href="https://sudolab.se/">
 
-  /* ---------- layout ---------- */
-  .stage{
-    position:relative;z-index:2;
-    height:100%;
-    display:flex;flex-direction:column;
-    align-items:center;justify-content:center;
-    gap:2.6rem;
-    padding:1.5rem;
-  }
+  <!-- Open Graph -->
+  <meta property="og:title" content="SudoLab — Systems, Experiments &amp; Intelligent Tools">
+  <meta property="og:description" content="A portal to intelligent tools, experiments and decision-support applications.">
+  <meta property="og:url" content="https://sudolab.se/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SudoLab">
 
-  header.mark{text-align:center;user-select:none}
-  .wordmark{
-    font-family:'Chakra Petch',sans-serif;
-    font-weight:700;
-    font-size:clamp(2.6rem,7vw,4.6rem);
-    letter-spacing:.06em;
-    line-height:1;
-  }
-  .wordmark .sudo{color:var(--ink)}
-  .wordmark .lab{color:var(--accent)}
-  .wordmark .tld{color:var(--ink-dim);font-weight:300;font-size:.45em;vertical-align:.5em;margin-left:.2em}
-  .tag{
-    margin-top:.9rem;
-    color:var(--ink-dim);
-    font-size:.8rem;
-    letter-spacing:.28em;
-    text-transform:uppercase;
-  }
-  .tag b{color:var(--signal);font-weight:500}
+  <!-- Favicon (inline SVG, no external requests) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305080c'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' fill='%234be0a0' text-anchor='middle'%3E%24_%3C/text%3E%3C/svg%3E">
 
-  /* ---------- terminal login ---------- */
-  .term{
-    width:min(21rem,86vw);
-    background:color-mix(in srgb, var(--bg-raise) 88%, transparent);
-    backdrop-filter:blur(10px);
-    border:1px solid var(--line);
-    border-radius:10px;
-    box-shadow:0 24px 70px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(142,168,255,.05), 0 0 60px -30px var(--accent);
-    overflow:hidden;
-  }
-  .term-bar{
-    display:flex;align-items:center;gap:.45rem;
-    padding:.45rem .7rem;
-    border-bottom:1px solid var(--line);
-    color:var(--ink-dim);font-size:.64rem;letter-spacing:.08em;
-  }
-  .dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--line)}
-  .dot:first-child{background:#3d4666}
-  .term-bar span{margin-left:auto}
-  .term-body{padding:.95rem 1rem 1.05rem;font-size:.76rem;line-height:1.7}
-  .ln .p{color:var(--accent)}
-  .ln .cmd{color:var(--ink)}
-  .ln.sudo-q{color:var(--signal)}
-  .ln.muted{color:var(--ink-dim)}
-  .ln.ok{color:var(--ok)}
-  .ln.err{color:#ff8f8f}
+  <style>
+    /* ==================================================================
+       SUDOLAB — DESIGN TOKENS
+       ================================================================== */
+    :root {
+      --bg:          #05080c;   /* page background (near-black blue) */
+      --bg-panel:    rgba(9, 15, 22, 0.82);   /* terminal panels     */
+      --bg-panel-2:  rgba(12, 20, 28, 0.85);  /* app cards           */
+      --border:      #1c2a38;   /* panel borders                     */
+      --border-soft: #14202c;
+      --text:        #d9e3ea;   /* primary text                      */
+      --muted:       #7e93a4;   /* secondary text                    */
+      --dim:         #55697a;   /* tertiary / decorative text        */
+      --green:       #4be0a0;   /* primary accent (terminal green)   */
+      --cyan:        #5ac8e8;   /* secondary accent                  */
+      --green-dim:   rgba(75, 224, 160, 0.14);
+      --cyan-dim:    rgba(90, 200, 232, 0.12);
+      --mono: "Cascadia Code", "JetBrains Mono", "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --radius: 10px;
+    }
 
-  /* app link list */
-  .dest{display:none;margin-top:.6rem}
-  .dest.show{display:block;animation:rise .4s ease both}
-  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .dest a{
-    display:flex;justify-content:space-between;align-items:center;gap:.8rem;
-    color:var(--ink);text-decoration:none;
-    padding:.45rem .55rem;margin:.2rem 0;
-    border:1px solid transparent;border-radius:6px;
-    font-size:.76rem;
-    transition:background .15s,border-color .15s,color .15s,transform .15s;
-  }
-  .dest a::before{content:'./';color:var(--ink-dim);margin-right:.35rem}
-  .dest a small{color:var(--ink-dim);font-size:.64rem;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dest a:hover{background:var(--accent-soft);border-color:var(--line);color:var(--accent);transform:translateX(3px)}
-  .dest a:hover small,.dest a:hover::before{color:var(--accent)}
-  .dest a:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+    /* ==================================================================
+       BASE
+       ================================================================== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  footer{
-    position:fixed;bottom:1.1rem;left:0;right:0;z-index:2;
-    display:flex;justify-content:center;gap:2rem;
-    color:var(--ink-dim);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;
-    user-select:none;
-  }
-  footer span b{color:var(--accent);font-weight:400}
+    html { scroll-behavior: smooth; }
 
-  @media (prefers-reduced-motion: reduce){
-    #field{display:none}
-    .dest.show{animation:none}
-  }
-  @media (max-height:620px){
-    .stage{gap:1.4rem}
-    .tag{display:none}
-  }
-</style>
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: var(--green-dim); color: var(--green); }
+
+    a { color: var(--cyan); }
+
+    /* Keyboard focus — high visibility, only on keyboard navigation */
+    :focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    /* ==================================================================
+       BACKGROUND LAYERS
+       canvas (z:0) → grid + scanlines (z:1) → page content (z:2)
+       ================================================================== */
+    #math-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    /* Faint blueprint grid */
+    .grid-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(90, 200, 232, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(90, 200, 232, 0.04) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 85%);
+      -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 85%);
+    }
+
+    /* Very subtle CRT scanlines */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(0, 0, 0, 0.10) 4px
+      );
+      opacity: 0.35;
+    }
+
+    /* ==================================================================
+       PAGE SHELL
+       ================================================================== */
+    .page {
+      position: relative;
+      z-index: 2;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    /* ==================================================================
+       1. TERMINAL HEADER BAR
+       ================================================================== */
+    .term-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 16px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(2px);
+    }
+
+    .term-dots { display: flex; gap: 7px; flex-shrink: 0; }
+    .term-dots span {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: var(--border);
+      border: 1px solid #2a3b4c;
+    }
+    .term-dots span:nth-child(1) { background: #3d2a2f; border-color: #5c3a42; }
+    .term-dots span:nth-child(2) { background: #3d382a; border-color: #5c543a; }
+    .term-dots span:nth-child(3) { background: #2a3d33; border-color: #3a5c4a; }
+
+    .term-title {
+      flex: 1;
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sys-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+    .sys-status .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(75, 224, 160, 0.7);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.35; }
+    }
+
+    /* ==================================================================
+       2. HERO TERMINAL
+       ================================================================== */
+    .hero-window {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      backdrop-filter: blur(2px);
+    }
+
+    .hero-window .window-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border-soft);
+      font-size: 12px;
+      color: var(--dim);
+    }
+
+    .hero-body { padding: 26px 28px 32px; }
+
+    /* Boot log — decorative typed sequence */
+    .boot-log {
+      font-size: 13.5px;
+      min-height: 6.4em;      /* reserve space so layout never shifts */
+      margin-bottom: 22px;
+      color: var(--muted);
+    }
+    .boot-log .line { display: block; min-height: 1.6em; }
+    .boot-log .line.cmd { color: var(--green); }
+
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 1.05em;
+      margin-left: 2px;
+      background: var(--green);
+      vertical-align: text-bottom;
+      animation: blink 1.05s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .hero-body h1 {
+      font-size: clamp(30px, 5.4vw, 52px);
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      line-height: 1.15;
+      color: var(--text);
+      animation: rise 0.7s ease-out both;
+      animation-delay: 0.15s;
+    }
+    .hero-body h1 .accent { color: var(--green); }
+
+    .hero-lede {
+      margin-top: 16px;
+      max-width: 58ch;
+      color: var(--muted);
+      font-size: 15px;
+      animation: rise 0.7s ease-out both;
+      animation-delay: 0.3s;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ==================================================================
+       3. APPLICATION LAUNCHER
+       ================================================================== */
+    .apps-section h2 {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      color: var(--dim);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      padding-left: 2px;
+    }
+    .apps-section h2::before { content: "// "; color: var(--green); }
+
+    .app-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .app-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 15px 20px;
+      min-height: 44px;                 /* generous touch target */
+      background: var(--bg-panel-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
+      backdrop-filter: blur(2px);
+    }
+
+    .app-row:hover,
+    .app-row:focus-visible {
+      border-color: var(--green);
+      background: rgba(14, 24, 33, 0.92);
+      transform: translateX(4px);
+    }
+
+    .app-row .prompt { color: var(--dim); flex-shrink: 0; }
+
+    .app-row .cmd {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--green);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app-row .host {
+      margin-left: auto;
+      font-size: 12.5px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app-row .arrow {
+      flex-shrink: 0;
+      color: var(--cyan);
+      transition: transform 0.25s ease;
+    }
+    .app-row:hover .arrow,
+    .app-row:focus-visible .arrow { transform: translateX(5px); }
+
+    /* Fallback links when JavaScript is disabled */
+    .noscript-links { display: grid; gap: 12px; }
+    .noscript-links a {
+      display: block;
+      padding: 16px 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-panel-2);
+      color: var(--green);
+      text-decoration: none;
+    }
+
+    /* ==================================================================
+       4. FOOTER / STATUS LINE
+       ================================================================== */
+    .status-footer {
+      margin-top: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 20px;
+      padding: 14px 18px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 11.5px;
+      letter-spacing: 0.1em;
+      color: var(--dim);
+      backdrop-filter: blur(2px);
+    }
+    .status-footer .brand { color: var(--muted); }
+    .status-footer .brand strong { color: var(--green); font-weight: 600; }
+    .status-footer .readout {
+      margin-left: auto;
+      color: var(--dim);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* ==================================================================
+       RESPONSIVE
+       ================================================================== */
+    @media (max-width: 640px) {
+      .page { padding: 16px 14px 28px; gap: 20px; }
+      .hero-body { padding: 20px 18px 26px; }
+      .boot-log { font-size: 12.5px; }
+      .app-row .host { display: none; }        /* keep rows compact on phones */
+      .app-row .arrow { margin-left: auto; }   /* arrow stays right-aligned   */
+      .term-title { font-size: 12px; }
+      .sys-status .label { display: none; }   /* keep the pulsing dot only */
+      .status-footer .readout { display: none; } /* reduce decoration */
+      .grid-layer { background-size: 40px 40px; }
+    }
+
+    /* ==================================================================
+       REDUCED MOTION
+       ================================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .cursor { animation: none; }
+      .sys-status .dot { animation: none; }
+      .hero-body h1, .hero-lede { animation: none; opacity: 1; transform: none; }
+    }
+  </style>
 </head>
 <body>
 
-<canvas id="field" aria-hidden="true"></canvas>
-<div class="vignette" aria-hidden="true"></div>
+  <!-- Decorative mathematical background (canvas is purely visual) -->
+  <canvas id="math-canvas" aria-hidden="true"></canvas>
+  <div class="grid-layer" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
 
-<div class="stage">
-  <header class="mark">
-    <div class="wordmark"><span class="sudo">sudo</span><span class="lab">lab</span><span class="tld">.se</span></div>
-    <div class="tag">personal engineering lab — <b>root access required</b></div>
-  </header>
+  <div class="page">
 
-  <section class="term" aria-label="Sign in">
-    <div class="term-bar">
-      <i class="dot"></i><i class="dot"></i><i class="dot"></i>
-      <span>root@sudolab — zsh</span>
-    </div>
-    <div class="term-body">
-      <div class="ln"><span class="p">root@sudolab</span> <span class="cmd">$ sudo ls /srv/apps</span></div>
-      <div class="ln muted" id="status">reading links.txt…</div>
+    <!-- ============ 1. TERMINAL HEADER ============ -->
+    <header class="term-bar">
+      <div class="term-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="term-title">sebastian@sudolab: ~/applications</div>
+      <div class="sys-status" role="status" aria-label="System online">
+        <span class="dot" aria-hidden="true"></span>
+        <span class="label">SYSTEM&nbsp;ONLINE</span>
+      </div>
+    </header>
 
-      <nav class="dest show" id="apps" aria-label="Web apps"></nav>
-    </div>
-  </section>
-</div>
+    <main>
+      <!-- ============ 2. HERO TERMINAL ============ -->
+      <section class="hero-window" aria-labelledby="hero-title">
+        <div class="window-head" aria-hidden="true">
+          <span>sudolab — session 0x2F</span>
+          <span>tty/1</span>
+        </div>
+        <div class="hero-body">
+          <!-- Decorative boot sequence (typed by JS, hidden from screen readers) -->
+          <div class="boot-log" id="boot-log" aria-hidden="true">
+            <span class="line cmd" data-text="$ initialize sudolab"></span>
+            <span class="line" data-text="&gt; loading application registry..."></span>
+            <span class="line" data-text="&gt; establishing secure routes..."></span>
+            <span class="line" data-text="&gt; system ready"></span>
+            <span class="line"><span class="cursor"></span></span>
+          </div>
 
-<footer>
-  <span>gbg&nbsp;·&nbsp;sweden</span>
-  <span>ℝ⁴ <b>→</b> ℝ³ <b>→</b> ℝ²</span>
-  <span>uptime&nbsp;<b>∞</b></span>
-</footer>
+          <h1 id="hero-title">Build. Analyze. <span class="accent">Decide.</span></h1>
+          <p class="hero-lede">
+            SudoLab is a collection of intelligent tools, experiments and
+            decision-support applications — built for clear analysis and
+            better decisions.
+          </p>
+        </div>
+      </section>
 
-<script>
-/* =========================================================
-   4D tesseract wireframe
-   16 vertices of {±1}⁴, 32 edges (vertices differing in one
-   coordinate). Double rotation in the (x,w) and (y,z) planes
-   plus a slow (x,y) drift, then two perspective projections:
-   ℝ⁴ → ℝ³ (divide by w-distance) → ℝ² (divide by z-distance).
-   A second, larger counter-rotating tesseract adds depth.
-   ========================================================= */
-const cv = document.getElementById('field');
-const cx = cv.getContext('2d');
-let W, H, dpr;
+      <!-- ============ 3. APPLICATION LAUNCHER ============ -->
+      <section class="apps-section" aria-labelledby="apps-title">
+        <h2 id="apps-title">application registry</h2>
 
-function resize(){
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
-  W = cv.width  = innerWidth  * dpr;
-  H = cv.height = innerHeight * dpr;
-  cv.style.width = innerWidth + 'px';
-  cv.style.height = innerHeight + 'px';
-  cx.fillStyle = '#05070d';
-  cx.fillRect(0,0,W,H);
-}
-resize();
-addEventListener('resize', resize);
+        <nav aria-label="SudoLab applications">
+          <ul class="app-list" id="app-list">
+            <!-- Application links are rendered here from links.txt
+                 (see the script section below). -->
+          </ul>
+        </nav>
 
-// vertices: all sign combinations of (±1,±1,±1,±1)
-const VERTS = [];
-for(let i=0;i<16;i++){
-  VERTS.push([ i&1?1:-1, i&2?1:-1, i&4?1:-1, i&8?1:-1 ]);
-}
-// edges: vertex pairs whose indices differ in exactly one bit
-const EDGES = [];
-for(let i=0;i<16;i++){
-  for(let j=i+1;j<16;j++){
-    const d = i ^ j;
-    if((d & (d-1)) === 0) EDGES.push([i,j]);
-  }
-}
+        <noscript>
+          <div class="noscript-links">
+            <a href="https://login.sudolab.se">./launch login</a>
+            <a href="https://trade.sudolab.se">./launch trade</a>
+          </div>
+        </noscript>
+      </section>
+    </main>
 
-const D4 = 3.0;   // 4D camera distance
-const D3 = 4.2;   // 3D camera distance
-let t = 0;
+    <!-- ============ 4. FOOTER / STATUS LINE ============ -->
+    <footer class="status-footer">
+      <span class="brand"><strong>SUDOLAB</strong> // SYSTEMS, EXPERIMENTS &amp; INTELLIGENT TOOLS</span>
+      <span>© <span id="year">2026</span></span>
+      <span class="readout" id="readout" aria-hidden="true">t = 0.000 · a:b = 3:2</span>
+    </footer>
+  </div>
 
-function rotate(p, a, i, j){
-  const c = Math.cos(a), s = Math.sin(a);
-  const pi = p[i], pj = p[j];
-  p[i] = c*pi - s*pj;
-  p[j] = s*pi + c*pj;
-}
+  <script>
+    'use strict';
 
-// project one tesseract; returns [x, y, depth] per vertex
-function project(time, dir, scale){
-  const out = [];
-  for(const v of VERTS){
-    const p = v.slice();
-    rotate(p, time*0.90*dir, 0, 3);   // x–w
-    rotate(p, time*0.65*dir, 1, 2);   // y–z
-    rotate(p, time*0.28,     0, 1);   // x–y drift
-    // ℝ⁴ → ℝ³
-    const s4 = D4 / (D4 - p[3]);
-    let x = p[0]*s4, y = p[1]*s4, z = p[2]*s4;
-    // ℝ³ → ℝ²
-    const s3 = D3 / (D3 - z);
-    out.push([
-      W/2 + x*s3*scale,
-      H/2 + y*s3*scale,
-      s4*s3                    // combined depth factor
-    ]);
-  }
-  return out;
-}
+    /* ==================================================================
+       APPLICATION REGISTRY — loaded from links.txt
+       ------------------------------------------------------------------
+       ADD OR REMOVE APPLICATIONS BY EDITING  links.txt  (same folder as
+       this page — no HTML changes needed). Format: one line, entries
+       separated by ":", name and URL separated by ",":
 
-function drawTesseract(pts, baseAlpha, baseWidth){
-  for(const [a,b] of EDGES){
-    const d = (pts[a][2] + pts[b][2]) / 2;      // avg depth ~0.6..2
-    const near = Math.min(1, Math.max(0, (d - 0.55) / 1.3));
-    cx.strokeStyle = `hsla(${228 - near*16},85%,${34 + near*38}%,${baseAlpha*(0.25 + near*0.75)})`;
-    cx.lineWidth = dpr * baseWidth * (0.5 + near*1.1);
-    cx.beginPath();
-    cx.moveTo(pts[a][0], pts[a][1]);
-    cx.lineTo(pts[b][0], pts[b][1]);
-    cx.stroke();
-  }
-  // vertex glow
-  for(const [x,y,d] of pts){
-    const near = Math.min(1, Math.max(0, (d - 0.55) / 1.3));
-    cx.fillStyle = `hsla(226,90%,${55 + near*30}%,${baseAlpha*(0.3 + near*0.7)})`;
-    cx.beginPath();
-    cx.arc(x, y, dpr*(1 + near*1.8), 0, 6.2832);
-    cx.fill();
-  }
-}
+         login,https://login.sudolab.se:trade,https://trade.sudolab.se
 
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+       The colon inside "https://" is handled by the parser. If links.txt
+       is missing or unreadable, FALLBACK_LINKS below is used instead.
+       ================================================================== */
+    const LINKS_FILE = 'links.txt';
+    const FALLBACK_LINKS = 'login,https://login.sudolab.se:trade,https://trade.sudolab.se';
 
-function frame(){
-  t += 0.006;
+    /* Parse "name,url:name,url:..." — splits on every ":" that is NOT
+       part of a protocol ("://"), so URLs stay intact. */
+    function parseLinks(text) {
+      return text
+        .replace(/\s+/g, '')                 /* tolerate whitespace/newlines */
+        .split(/:(?!\/\/)/)
+        .map(function (entry) {
+          const sep = entry.indexOf(',');
+          if (sep < 1) return null;          /* malformed entry — skip */
+          const name = entry.slice(0, sep);
+          const url = entry.slice(sep + 1);
+          if (!name || !/^https?:\/\//i.test(url)) return null;
+          return { name: name, url: url };
+        })
+        .filter(Boolean);
+    }
 
-  // translucent clear -> soft motion trails
-  cx.fillStyle = 'rgba(5,7,13,0.18)';
-  cx.fillRect(0,0,W,H);
+    /* Render application links as real anchor elements (list rows) */
+    function renderApps(apps) {
+      const list = document.getElementById('app-list');
+      list.textContent = '';                 /* clear previous render */
+      const frag = document.createDocumentFragment();
 
-  const base = Math.min(W,H);
-  // large faint background tesseract, counter-rotating
-  drawTesseract(project(t*0.5, -1, base*0.46), 0.16, 0.6);
-  // main tesseract
-  drawTesseract(project(t,      1, base*0.21), 0.85, 0.8);
+      apps.forEach(function (app) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = app.url;
+        a.className = 'app-row';
+        a.setAttribute('aria-label', 'Launch ' + app.name);
 
-  if(!reduce) requestAnimationFrame(frame);
-}
+        const prompt = document.createElement('span');
+        prompt.className = 'prompt';
+        prompt.setAttribute('aria-hidden', 'true');
+        prompt.textContent = '$';
 
-if(reduce){
-  // static single frame for reduced-motion users
-  const base = Math.min(W,H);
-  drawTesseract(project(0.8, -1, base*0.46), 0.16, 0.6);
-  drawTesseract(project(1.7,  1, base*0.21), 0.85, 0.8);
-}else{
-  requestAnimationFrame(frame);
-}
+        const cmd = document.createElement('span');
+        cmd.className = 'cmd';
+        cmd.textContent = './launch ' + app.name;
 
-/* =========================================================
-   Link list loader
-   Reads a plain text file of buttontext,url pairs.
-   Entries may be separated by NEWLINES or by COLONS, e.g.:
-     lab,https://lab.sudolab.se:code,https://code.sudolab.se
-   or one per line:
-     lab,https://lab.sudolab.se
-     code,https://code.sudolab.se
-   Colons inside URLs (https:// or :8080 ports) are handled.
-   ---------------------------------------------------------
-   NOTE: point LINKS_URL at a file on the SAME host as this
-   page (e.g. ./links.txt). OneDrive/1drv.ms share links can
-   NOT be fetched by browser JavaScript (CORS + sign-in flow).
-   ========================================================= */
-const LINKS_URL = 'links.txt';
+        const host = document.createElement('span');
+        host.className = 'host';
+        host.textContent = app.url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
-const FALLBACK = [
-  ['lab',   'https://lab.sudolab.se'],
-  ['code',  'https://code.sudolab.se'],
-  ['home',  'https://home.sudolab.se'],
-  ['notes', 'https://notes.sudolab.se'],
-];
+        const arrow = document.createElement('span');
+        arrow.className = 'arrow';
+        arrow.setAttribute('aria-hidden', 'true');
+        arrow.innerHTML = '&#8594;';
 
-function parseLinks(text){
-  // split on newlines, or on colons that don't belong to a URL
-  // (i.e. not followed by "//" and not followed by a digit/port)
-  const entries = text
-    .split(/\r?\n|:(?!\/\/|\d)/)
-    .map(s => s.trim())
-    .filter(Boolean);
+        a.appendChild(prompt);
+        a.appendChild(cmd);
+        a.appendChild(host);
+        a.appendChild(arrow);
+        li.appendChild(a);
+        frag.appendChild(li);
+      });
 
-  const out = [];
-  for(const entry of entries){
-    const i = entry.indexOf(',');
-    if(i === -1) continue;
-    const label = entry.slice(0, i).trim();
-    let url = entry.slice(i + 1).trim();
-    if(!label || !url) continue;
-    if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
-    out.push([label, url]);
-  }
-  return out;
-}
+      list.appendChild(frag);
+    }
 
-function render(list){
-  const nav = document.getElementById('apps');
-  nav.innerHTML = '';
-  for(const [label, url] of list){
-    const a = document.createElement('a');
-    a.href = url;
-    a.append(label);
-    const small = document.createElement('small');
-    small.textContent = url.replace(/^https?:\/\//,'');
-    a.append(small);
-    nav.append(a);
-  }
-}
+    /* Paint the fallback immediately, then swap in links.txt when loaded */
+    (function loadApps() {
+      renderApps(parseLinks(FALLBACK_LINKS));
+      fetch(LINKS_FILE, { cache: 'no-store' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('links.txt HTTP ' + res.status);
+          return res.text();
+        })
+        .then(function (text) {
+          const apps = parseLinks(text);
+          if (apps.length) renderApps(apps);
+        })
+        .catch(function () { /* keep fallback links */ });
+    })();
 
-const status = document.getElementById('status');
+    /* ==================================================================
+       FOOTER YEAR
+       ================================================================== */
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-fetch(LINKS_URL, { cache: 'no-store' })
-  .then(r => { if(!r.ok) throw new Error(r.status); return r.text(); })
-  .then(text => {
-    const list = parseLinks(text);
-    if(!list.length) throw new Error('empty');
-    render(list);
-    status.textContent = `# ${list.length} app${list.length===1?'':'s'} mounted from links.txt`;
-  })
-  .catch(() => {
-    render(FALLBACK);
-    status.textContent = '# links.txt not found — showing defaults';
-  });
-</script>
+    /* ==================================================================
+       BOOT SEQUENCE — types the command lines on load (< 2 seconds).
+       Purely decorative; the app links are available immediately.
+       ================================================================== */
+    (function bootSequence() {
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const lines = Array.prototype.slice.call(
+        document.querySelectorAll('#boot-log .line[data-text]')
+      );
+
+      /* Reduced motion (or very old browsers): show everything at once */
+      if (reduced) {
+        lines.forEach(function (el) { el.innerHTML = el.getAttribute('data-text'); });
+        return;
+      }
+
+      const CHAR_MS = 14;    /* per-character delay  */
+      const LINE_MS = 130;   /* pause between lines  */
+      let li = 0;
+
+      function typeLine() {
+        if (li >= lines.length) return;
+        const el = lines[li];
+        /* data-text may contain the HTML entity &gt; — decode it once */
+        const decoder = document.createElement('textarea');
+        decoder.innerHTML = el.getAttribute('data-text');
+        const text = decoder.value;
+        let ci = 0;
+
+        (function typeChar() {
+          if (ci <= text.length) {
+            el.textContent = text.slice(0, ci);
+            ci++;
+            setTimeout(typeChar, CHAR_MS);
+          } else {
+            li++;
+            setTimeout(typeLine, LINE_MS);
+          }
+        })();
+      }
+      typeLine();
+    })();
+
+    /* ==================================================================
+       MATHEMATICAL BACKGROUND — layered Lissajous system
+       ------------------------------------------------------------------
+       Three harmonic parametric curves:
+           x(u) = cx + Rx · sin(a·u + ωt + φ + pointer.y)
+           y(u) = cy + Ry · sin(b·u + 1.3ωt + pointer.x)
+       plus orbital nodes sampled along the primary curve, connected
+       when close. Pointer movement bends the phase space subtly.
+
+       Performance:
+         · devicePixelRatio capped at 1.5
+         · single rAF loop, paused when the tab is hidden
+         · static single frame under prefers-reduced-motion
+       ================================================================== */
+    (function mathBackground() {
+      const canvas = document.getElementById('math-canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+      const TAU = Math.PI * 2;
+
+      const SEGMENTS = 220;   /* polyline resolution per curve */
+      const NODES = 24;       /* orbital nodes on the primary curve */
+
+      /* Curve definitions: Lissajous frequency ratios + drift speeds */
+      const CURVES = [
+        { a: 3, b: 2, phase: 0.0, speed: 0.110, rgb: '75, 224, 160',  alpha: 0.30, width: 1.4 },
+        { a: 5, b: 4, phase: 1.7, speed: -0.072, rgb: '90, 200, 232', alpha: 0.20, width: 1.1 },
+        { a: 7, b: 6, phase: 3.1, speed: 0.048, rgb: '126, 147, 164', alpha: 0.11, width: 1.0 }
+      ];
+
+      let w = 0, h = 0;
+      const pointer = { x: 0, y: 0, tx: 0, ty: 0 };   /* smoothed, in [-0.5, 0.5] */
+
+      function resize() {
+        w = window.innerWidth;
+        h = window.innerHeight;
+        canvas.width = Math.round(w * DPR);
+        canvas.height = Math.round(h * DPR);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        if (REDUCED) drawFrame(12.0);   /* redraw the static frame */
+      }
+      window.addEventListener('resize', resize);
+
+      window.addEventListener('pointermove', function (e) {
+        pointer.tx = e.clientX / w - 0.5;
+        pointer.ty = e.clientY / h - 0.5;
+      }, { passive: true });
+
+      function curvePoint(c, u, t) {
+        const cx = w * 0.5, cy = h * 0.46;
+        const rx = w * 0.44, ry = h * 0.38;
+        return [
+          cx + rx * Math.sin(c.a * u + t * c.speed + c.phase + pointer.y * 0.7),
+          cy + ry * Math.sin(c.b * u + t * c.speed * 1.3 + pointer.x * 0.7)
+        ];
+      }
+
+      function drawFrame(t) {
+        ctx.clearRect(0, 0, w, h);
+
+        /* --- layered Lissajous curves --- */
+        for (let k = 0; k < CURVES.length; k++) {
+          const c = CURVES[k];
+          ctx.beginPath();
+          for (let i = 0; i <= SEGMENTS; i++) {
+            const p = curvePoint(c, (i / SEGMENTS) * TAU, t);
+            if (i === 0) ctx.moveTo(p[0], p[1]);
+            else ctx.lineTo(p[0], p[1]);
+          }
+          ctx.strokeStyle = 'rgba(' + c.rgb + ', ' + c.alpha + ')';
+          ctx.lineWidth = c.width;
+          ctx.stroke();
+        }
+
+        /* --- orbital nodes on the primary curve --- */
+        const nodes = [];
+        const nc = CURVES[0];
+        for (let i = 0; i < NODES; i++) {
+          /* each node drifts along the curve at its own rate */
+          const u = (i / NODES) * TAU + t * 0.021 * (1 + (i % 5) * 0.12);
+          nodes.push(curvePoint(nc, u, t));
+        }
+
+        /* connect nearby nodes with faint lines */
+        const maxDist = Math.min(w, h) * 0.20;
+        for (let i = 0; i < NODES; i++) {
+          for (let j = i + 1; j < NODES; j++) {
+            const dx = nodes[i][0] - nodes[j][0];
+            const dy = nodes[i][1] - nodes[j][1];
+            const d = Math.hypot(dx, dy);
+            if (d < maxDist) {
+              ctx.strokeStyle = 'rgba(90, 200, 232, ' + (0.10 * (1 - d / maxDist)).toFixed(3) + ')';
+              ctx.lineWidth = 0.7;
+              ctx.beginPath();
+              ctx.moveTo(nodes[i][0], nodes[i][1]);
+              ctx.lineTo(nodes[j][0], nodes[j][1]);
+              ctx.stroke();
+            }
+          }
+        }
+
+        /* node dots */
+        ctx.fillStyle = 'rgba(75, 224, 160, 0.55)';
+        for (let i = 0; i < NODES; i++) {
+          ctx.beginPath();
+          ctx.arc(nodes[i][0], nodes[i][1], 1.6, 0, TAU);
+          ctx.fill();
+        }
+      }
+
+      /* --- footer parameter readout (updated 4×/second, not per frame) --- */
+      const readout = document.getElementById('readout');
+      let lastReadout = 0;
+      function updateReadout(t, now) {
+        if (!readout || now - lastReadout < 250) return;
+        lastReadout = now;
+        readout.textContent =
+          't = ' + t.toFixed(3) +
+          ' · a:b = 3:2 · φ = ' + (pointer.x * 0.7).toFixed(3);
+      }
+
+      /* --- animation loop --- */
+      let rafId = null;
+      let last = 0;
+      let elapsed = 0;
+
+      function loop(now) {
+        if (!last) last = now;
+        const dt = Math.min(0.05, (now - last) / 1000);  /* clamp tab-switch jumps */
+        last = now;
+        elapsed += dt;
+
+        /* recover if the viewport size changed without a resize event
+           (some embedded webviews report 0×0 at script time) */
+        if (w !== window.innerWidth || h !== window.innerHeight) resize();
+
+        /* ease the pointer toward its target for a fluid response */
+        pointer.x += (pointer.tx - pointer.x) * 0.045;
+        pointer.y += (pointer.ty - pointer.y) * 0.045;
+
+        drawFrame(elapsed);
+        updateReadout(elapsed, now);
+        rafId = requestAnimationFrame(loop);
+      }
+
+      function start() {
+        if (rafId === null && !REDUCED) {
+          last = 0;
+          rafId = requestAnimationFrame(loop);
+        }
+      }
+      function stop() {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      }
+
+      /* pause all canvas work while the tab is hidden */
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stop(); else start();
+      });
+
+      resize();
+      if (REDUCED) drawFrame(12.0);   /* one elegant static frame */
+      else start();
+    })();
+  </script>
 </body>
 </html>
