@@ -1,1 +1,1 @@
-lab,https://lab.sudolab.se:code,https://code.sudolab.se:home,https://home.sudolab.se:notes,https://notes.sudolab.se
+login,https://login.sudolab.se:trade,https://trade.sudolab.se:dss,https://dss.sudolab.se:futurewebapp,https://futurewebapp.sudolab.se
